@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Restaurant Recommendation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .question-container {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #result-container {
+            margin-top: 20px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Restaurant Recommendation Quiz!</h1>
+
+        <form id="quiz-form">
+            {% csrf_token %}
+            <div class="question-container" id="question1">
+                <p>Do you prefer Algerian cuisine?</p>
+                <label><input type="radio" name="algerian" value="yes"> Yes</label>
+                <label><input type="radio" name="algerian" value="no"> No</label><br>
+            </div>
+
+            <div class="question-container" id="question2">
+                <p>Are you looking for budget-friendly options?</p>
+                <label><input type="radio" name="budget_friendly" value="yes"> Yes</label>
+                <label><input type="radio" name="budget_friendly" value="no"> No</label><br>
+            </div>
+
+            <div class="question-container" id="question3">
+                <p>Do you prefer a cozy atmosphere?</p>
+                <label><input type="radio" name="cozy" value="yes"> Yes</label>
+                <label><input type="radio" name="cozy" value="no"> No</label><br>
+            </div>
+
+            <div class="question-container" id="question4">
+                <p>Do you have any preference for the restaurant's location?</p>
+                <label><input type="radio" name="location" value="downtown"> Downtown</label>
+                <label><input type="radio" name="location" value="uptown"> Uptown</label>
+                <label><input type="radio" name="location" value="suburb"> Suburb</label><br>
+            </div>
+
+            <div class="question-container" id="question5">
+                <p>Are you interested in trying traditional Algerian dishes?</p>
+                <label><input type="radio" name="traditional_dishes" value="yes"> Yes</label>
+                <label><input type="radio" name="traditional_dishes" value="no"> No</label><br>
+            </div>
+
+            <div id="result-container" style="display: none;">
+                <h2>Recommended Restaurants:</h2>
+                <ul id="recommended-restaurants"></ul>
+            </div>
+
+            <button id="prev-btn" style="display: none;" type="button">Previous</button>
+            <button id="next-btn" type="button">Next</button>
+            <button id="submit-btn" style="display: none;" type="button">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        const questions = document.querySelectorAll('.question-container');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const submitBtn = document.getElementById('submit-btn');
+const resultContainer = document.getElementById('result-container');
+const recommendedRestaurants = document.getElementById('recommended-restaurants');
+
+let currentQuestionIndex = 0;
+
+function showQuestion(index) {
+    questions.forEach((question, idx) => {
+        question.style.display = idx === index ? 'block' : 'none';
+    });
+
+    prevBtn.style.display = index === 0 ? 'none' : 'inline-block';
+    nextBtn.style.display = index === questions.length - 1 ? 'none' : 'inline-block';
+    submitBtn.style.display = index === questions.length - 1 ? 'inline-block' : 'none';
+}
+
+function showResult(restaurants) {
+    resultContainer.style.display = 'block';
+    recommendedRestaurants.innerHTML = ''; // Clear previous recommendations
+    restaurants.forEach(restaurant => {
+        const li = document.createElement('li');
+        li.textContent = `${restaurant.name} in ${restaurant.city}`;
+        recommendedRestaurants.appendChild(li);
+    });
+}
+
+prevBtn.addEventListener('click', () => {
+    currentQuestionIndex--;
+    showQuestion(currentQuestionIndex);
+});
+
+nextBtn.addEventListener('click', () => {
+    currentQuestionIndex++;
+    showQuestion(currentQuestionIndex);
+});
+
+submitBtn.addEventListener('click', () => {
+    const formData = new FormData(document.getElementById('quiz-form'));
+    const preferences = {};
+    formData.forEach((value, key) => {
+        preferences[key] = value;
+    });
+    console.log(preferences); // Check if preferences object contains the expected data
+    // Fetch request...
+    // Send preferences to server
+    fetch('/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(preferences)
+    })
+    .then(response => response.json())
+    .then(data => {
+        showResult(data.recommended_restaurants);
+    })
+    .catch(error => console.error('Error:', error));
+});
+
+
+// Function to get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Check if the cookie name matches the requested name
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+showQuestion(currentQuestionIndex);
+
+    </script>
+    
+</body>
+</html>
