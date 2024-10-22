@@ -98,7 +98,7 @@ def restaurant_recommendation(request):
 
             if budget_pref == 'yes':
                 recommended_restaurants.append({'name': 'Algiers Budget Bites', 'city': 'Algiers'})
-
+                print("nexus{0s1nt_1s_g0000000d}")
             if cozy_pref == 'yes':
                 if location_pref == 'downtown':
                     recommended_restaurants.append({'name': 'Downtown Cozy Corner', 'city': 'Algiers'})
